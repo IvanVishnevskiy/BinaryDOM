@@ -7,13 +7,16 @@ const vreact = {}
 
 const tree = ''
 
-const tags = ['div', 'span', 'p', 'h1'].reduce((all, next, i) => {
+const allTags = ['div', 'span', 'p', 'h1']
+
+const tags = allTags.reduce((all, next, i) => {
   const hex = (i + 1).toString(16)
   all[next] = Hex.addZeros(hex, 4)
   return all
 }, {})
+const binTags = Object.entries(tags).reduce((obj, [key, value]) => ({...obj, [value]: key}), {})
 window.tags = tags
-console.log(tags)
+console.log(tags, binTags)
 
 class Component {
   constructor(props = {}, children = []) {
@@ -31,14 +34,23 @@ class Component {
   }
 }
 
-const parseTree = (tree = '') => {
-  const mainObject = new Deserialization('HTMLNode', tree)
-  console.log(mainObject)
+const initialTreeRender = tree => {
+  console.log('Binary tree:', tree)
+  tree = typeof tree === 'string' ? new Deserialization('HTMLNode', tree).fields : tree
+  const { tag, attrs = [], nodes = [], text } = tree
+  if(text) return document.createTextNode(text)
+  const elem = document.createElement(binTags[tag])
+  if(attrs && attrs.length) attrs.forEach(({ name, value }) => elem.setAttribute(name, value))
+  if(nodes && nodes.length) nodes.forEach(node => {
+    const elemNode = initialTreeRender(node)
+    elem.appendChild(elemNode)
+  })
+  return elem
 }
 
 const renderToHTML = (query, { child: item }) => {
-  // console.log('qwe', item)
-  parseTree(item)
+  const renderedTree = initialTreeRender(item)
+  document.querySelector(query).appendChild(renderedTree)
   // document.querySelector(query).appendChild(item.render())
 }
 
