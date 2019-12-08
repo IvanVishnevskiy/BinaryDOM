@@ -58,7 +58,7 @@ class Hex {
   static getLength = (string = '') => {
     let length = parseInt(string.slice(0, 2), 16)
     let start = 2
-    if(length > 254) {
+    if(length === 254) {
       length = parseInt(string.slice(0, 8), 16)
       start = 8
     }
