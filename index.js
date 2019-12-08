@@ -1,12 +1,19 @@
 import vreact, { Component, renderToHTML } from './vreact'
 
 class App extends Component {
+  state = {
+    counter: 1
+  }
+  componentDidMount = () => {
+    this.setState({
+      counter: 2
+    })
+  }
   render() {
     return (
       <div>
         <h1>Hello!</h1>
-        <div>Ivan</div>
-        <p>What are going on here?</p>
+        <p>Counter: {this.state.counter}</p>
       </div>
     )
   }
@@ -22,17 +29,4 @@ class App extends Component {
 //   </div>
 // ))
 
-renderToHTML('#App', (
-  <div style="font-size: 20px">
-    <h1>Привет!</h1>
-    <p style="color: yellow">
-      Как дела?
-    </p>
-    <p style="color: blue">
-      Говори
-    </p>
-    <p style="color: green">
-      Отвечай
-    </p>
-  </div>
-))
+renderToHTML('#App', <App />)
