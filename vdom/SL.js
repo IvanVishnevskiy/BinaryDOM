@@ -8,13 +8,10 @@ class TypesIn {
   }
   static string = (str = '') => Hex.fromString(str)
   static array = (items = [], { arrayType }) => {
-    console.log(arrayType, items)
-    items = items ? items : []
+    if(!items || !items.length && !items.__proto__.constructor.assign) return '00000000'
     // TODO: Bad code
     if(items.__proto__.constructor.assign) {
-      console.log(items, new Serialization('attribute', { name: 'color', value: 'red' }))
       items = Object.entries(items).map(([name, value]) => Hex.addLength(String(types[arrayType[0]].id) + new Serialization(arrayType[0], { name, value }).getHex()))
-      console.log(123, items)
     }
     else items = items.map(item => {
       const type = typeof item === 'object' ? 'HTMLNode' : 'TextNode'
@@ -43,8 +40,8 @@ class TypesOut {
     return { item: res, res: data.slice(offset)}
   }
   static array = (data = [], type) => {
+    if (!data || data.slice(0, 8) === '00000000') return { item: null, res: data.slice(8) }
     const { str, offset } = Hex.getWithLength(data)
-    if(!str || !str.length || str.slice(0, 8) === '00000000') return { item: null, res: str.slice(8) }
     const { arrayType } = type
     const arrayTypes = arrayType.reduce((t, n) => {
       const id = types[n.toLowerCase()].id
