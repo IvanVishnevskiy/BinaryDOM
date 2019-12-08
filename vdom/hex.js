@@ -13,7 +13,8 @@ class Hex {
   static fromNumber = (number = 0, length = 4) => this.addZeros(number.toString(16), length)
 
   static fromString = (string = '') => {
-    string = string
+    
+    string = String(string)
       .split('')
       .map(item => {
         return item
