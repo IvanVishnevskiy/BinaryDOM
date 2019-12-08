@@ -7,15 +7,28 @@ class Hex {
   static random = (length = 8) => {
     const id = []
     while(id.length !== length) id.push(Math.floor(Math.random() * 0xff))
-    return id.map(item => addHexZero(item.toString(16))).join('')
+    return id.map(item => this.addZeros(item.toString(16))).join('')
   }
+  
   static fromNumber = (number = 0, length = 4) => this.addZeros(number.toString(16), length)
+
   static fromString = (string = '') => {
-    string = unescape(encodeURIComponent(string))
-    const out = []
-    for(let i = 0; i < string.length; i++) out.push(string.charCodeAt(i).toString(16))
-    return this.addLength(out.map(item => this.addZeros(item)).join(''))
+    string = string
+      .split('')
+      .map(item => {
+        return item
+      })
+      .map(item => {
+        const it = this.addZeros(item.codePointAt(0).toString(16), 4)
+        return it
+      })
+      .join('')
+    const withLength = this.addLength(
+      string
+    )
+    return withLength
   }
+
   static addLength = (input = '') => {
     let out = []
     const length = input.length
@@ -27,7 +40,7 @@ class Hex {
   }
   static getWithLength = (string = '') => {
     const { length, start } = this.getLength(string)
-    return { length, offset: start + length, str: string.slice(start, length) }
+    return { length, offset: start + length, str: string.slice(start, start + length) }
   }
   static getArrayWithLength = (string = '') => {
     const { length, start } = this.getLength(string)
@@ -35,9 +48,10 @@ class Hex {
     let offset = 0
     const arr = []
     for(let i = 0; i < length; i++) {
-      const { length, start } = this.getLength(string.slice(offset))
+      let newString = string.slice(offset)
+      const { length, start } = this.getLength(newString)
+      arr.push(newString.slice(start, length + start))
       offset += length + start
-      arr.push(string.slice(start, length))
     }
     return arr
   }

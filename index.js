@@ -12,12 +12,18 @@ class App extends Component {
   }
 }
 
+// renderToHTML('#App', (
+//   <div>
+//     <h1>Hello,</h1><p>Test</p>
+//     <div style="color: red">
+//       <p>Hi</p>
+//       <p>Me</p>
+//     </div>
+//   </div>
+// ))
+
 renderToHTML('#App', (
-  <div>
-    <h1>Hello,</h1><p>Test</p>
-    <div style="color: red">
-      <p>Hi</p>
-      <p>Me</p>
-    </div>
+  <div color="red">
+    Привет, как дела?  
   </div>
 ))

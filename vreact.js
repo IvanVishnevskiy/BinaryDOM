@@ -12,7 +12,7 @@ const tags = ['div', 'span', 'p', 'h1'].reduce((all, next, i) => {
   all[next] = Hex.addZeros(hex, 4)
   return all
 }, {})
-
+window.tags = tags
 console.log(tags)
 
 class Component {

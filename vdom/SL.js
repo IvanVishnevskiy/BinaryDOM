@@ -1,6 +1,5 @@
 import { types, names } from './schema'
 import Hex from './hex'
-import { parse } from 'path'
 
 class TypesIn {
   static int = (data = 0, length = 64) => {
@@ -9,10 +8,13 @@ class TypesIn {
   }
   static string = (str = '') => Hex.fromString(str)
   static array = (items = [], { arrayType }) => {
+    console.log(arrayType, items)
     items = items ? items : []
     // TODO: Bad code
     if(items.__proto__.constructor.assign) {
-      items = Object.entries(items).map(([name, value]) => String(types[arrayType[0]].id) + new Serialization(arrayType[0], { name, value }).getHex())
+      console.log(items, new Serialization('attribute', { name: 'color', value: 'red' }))
+      items = Object.entries(items).map(([name, value]) => Hex.addLength(String(types[arrayType[0]].id) + new Serialization(arrayType[0], { name, value }).getHex()))
+      console.log(123, items)
     }
     else items = items.map(item => {
       const type = typeof item === 'object' ? 'HTMLNode' : 'TextNode'
@@ -32,45 +34,33 @@ class TypesOut {
   static bytes = (data = []) => ({ res: [], item: data })
   static string = (data = '') => {
     if(data.length === 0) return ''
-    let offset = 0
-    let start = 0
-    let length = parseInt(data.slice(0, 2), 16)
-    if(length > 254) {
-      length = parseInt(data.slice(0, 8), 16)
-      offset = 8
-      start = 8
+    const { str, offset } = Hex.getWithLength(data)
+    const decoded = []
+    for(let i = 0; i < str.length / 4; i++) {
+      decoded.push(String.fromCodePoint(parseInt(str.substr(i * 4, 4), 16)))
     }
-    else {
-      offset = 2
-      start = 2
-    }
-    offset += length
-    const str = []
-    for(let i = 0; i < length; i += 2) str.push(String.fromCharCode(parseInt(data[i] + data[i + 1], 16)))
-    const res = str.filter(item => item).join('')
+    const res = decoded.join('')
     return { item: res, res: data.slice(offset)}
   }
   static array = (data = [], type) => {
-    if(!data || !data.length) return console.error('No data to parse long from.')
-    if(data.slice(0, 8) === '00000000') return { item: null, res: data.slice(8) }
+    const { str, offset } = Hex.getWithLength(data)
+    if(!str || !str.length || str.slice(0, 8) === '00000000') return { item: null, res: str.slice(8) }
     const { arrayType } = type
     const arrayTypes = arrayType.reduce((t, n) => {
       const id = types[n.toLowerCase()].id
       t[id] = names[id]
       return t
     }, {})
-    const parsedData = Hex.getWithLength(data)
-    const items = Hex.getArrayWithLength(parsedData.str).map(item => {
+    const items = Hex.getArrayWithLength(str).filter(item => item).map(item => {
       const type = item.slice(0, 4)
       const actualType = arrayTypes[type]
       if (!actualType) throw new Error('Unknown array type!')
-      console.log(actualType, item)
-      const data = new Deserialization(actualType, item.slice(4))
-      console.log(data)
+      const data = new Deserialization(actualType, item.slice(4)).fields
+      return data  
     })
     // const itemtype = str.slice(0, 4)
     // console.log(str, itemtype, length)
-    return { item: [], res: '' }    
+    return { item: items, res: data.slice(offset) }    
   }
   static long = data => {
     if(!data || !data.length) return console.error('No data to parse long from.')
@@ -96,6 +86,7 @@ class Serialization {
     params.forEach(param => {
       const { name, type } = param
       const ser = String(TypesIn[type.fieldType](inputParams[name], type))
+      console.log(2, name, type, ser)
       this.hex = this.hex + ser || '00000000'
     })
     return output
@@ -114,7 +105,7 @@ class Deserialization {
     if(!name) throw new Error('No name')
     if(!data) throw new Error('Nothing to deserialize')
     const object = types[name.toLowerCase()]
-    console.log(object)
+    console.log(1, object)
     if(!object) throw new Error('No object for: ' + name)
     object.params.forEach(field => {
       const { name, type } = field
