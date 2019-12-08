@@ -59,15 +59,6 @@ class TypesOut {
     // console.log(str, itemtype, length)
     return { item: items, res: data.slice(offset) }    
   }
-  static long = data => {
-    if(!data || !data.length) return console.error('No data to parse long from.')
-    const item = Bytes.toHex(data.slice(0, 8))
-    return { item, res: data.slice(8)}
-  }
-  static name = data => {
-    if(!data || !data.length) return console.error('No data to parse long from.')
-    return { item: Bytes.toHex(data.slice(0, 4)), res: data.slice(4) }
-  }
 }
 
 class Serialization {
@@ -79,11 +70,11 @@ class Serialization {
     if(!inputName) throw new Error('Nothing to serialize')
     const object = types[inputName.toLowerCase()]
     if(!object) throw new Error('Unknown name: ' + inputName)
+    this.hex = this.hex + object.id
     const { params, output = '' } = object
     params.forEach(param => {
       const { name, type } = param
       const ser = String(TypesIn[type.fieldType](inputParams[name], type))
-      console.log(2, name, type, ser)
       this.hex = this.hex + ser || '00000000'
     })
     return output
@@ -102,8 +93,9 @@ class Deserialization {
     if(!name) throw new Error('No name')
     if(!data) throw new Error('Nothing to deserialize')
     const object = types[name.toLowerCase()]
-    console.log(1, object)
     if(!object) throw new Error('No object for: ' + name)
+    const id = data.slice(0, 4)
+    data = data.slice(4)
     object.params.forEach(field => {
       const { name, type } = field
       const { res, item } = TypesOut[type.fieldType](data || [], type)
