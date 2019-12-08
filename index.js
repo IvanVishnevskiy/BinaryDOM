@@ -23,7 +23,16 @@ class App extends Component {
 // ))
 
 renderToHTML('#App', (
-  <div color="red">
-    Привет, как дела?  
+  <div style="font-size: 20px">
+    <h1>Привет!</h1>
+    <p style="color: yellow">
+      Как дела?
+    </p>
+    <p style="color: blue">
+      Говори
+    </p>
+    <p style="color: green">
+      Отвечай
+    </p>
   </div>
 ))
