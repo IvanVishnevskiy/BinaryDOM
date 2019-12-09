@@ -1,9 +1,34 @@
 import { names, types } from './vdom/schema'
 import { Serialization, Deserialization } from './vdom/SL'
 import Hex from './vdom/hex'
-console.log(types)
 
-const vreact = {}
+const vreact = (tag, attrs = {}, ...children) => {
+  console.log(tag, attrs, children)
+  if(typeof tag === 'function') {
+    const funcStr = tag.toString()
+    const id = Hex.random(8)
+    const Component = components.get(funcStr) || new tag({ props: attrs, children, id })
+    components.set(tag.toString(), Component)
+    components.set(id, Component)
+    const { child } = Component.render()
+    const hexView = new Serialization('component', { id, attrs, node: child }).getHex()
+    return { child: hexView }
+  }
+  let element = tags[tag]
+  const type = typeof tag === 'string' ? 'HTMLNode' : ''
+  const text = children.reduce((str, next) => typeof next === 'string' ? next + str : str , '')
+  const hexView = new Serialization(type, { tag: element, text, nodes: children, attrs }).getHex()
+
+  return { child: hexView }
+  const id = `El${String(Math.random()).replace('.', '')}`
+  if (typeof tag === 'function')
+    return new tag({ id, children })
+  console.log(tag, attrs, children)
+  if(typeof tag === 'string') {
+    return 
+  }
+  
+}
 
 const tree = ''
 
@@ -43,7 +68,18 @@ const updateTree = component => {
   const olddata = new Deserialization('component', currentBinaryDom.slice(currentPlace - 4)).fields
   const oldNode = olddata.node
 
-  console.log(newNode, oldNode)
+  console.log(new Deserialization(names[newNode.slice(0, 4)], newNode), new Deserialization(names[oldNode.slice(0, 4)], oldNode))
+  console.log('\n\n', newNode, oldNode)
+  const differences = []
+  for(let i = 0; i < Math.min(newNode.length, oldNode.length); i++) {
+    const newChar = newNode[i]
+    const oldChar = oldNode[i]
+    if(newChar !== oldChar) differences.push(i)
+  }
+
+  // console.log(differences[differences.length - 1])
+  // console.log(<div></div>)
+
 }
 
 const initialTreeRender = tree => {
@@ -78,32 +114,7 @@ const renderToHTML = (query, { child: item }) => {
 
 const components = new Map()
 
-export default (tag, attrs = {}, ...children) => {
-  if(typeof tag === 'function') {
-    const funcStr = tag.toString()
-    const id = Hex.random(8)
-    const Component = components.get(funcStr) || new tag({ props: attrs, children, id })
-    components.set(tag.toString(), Component)
-    components.set(id, Component)
-    const { child } = Component.render()
-    const hexView = new Serialization('component', { id, attrs, node: child }).getHex()
-    return { child: hexView }
-  }
-  let element = tags[tag]
-  const type = typeof tag === 'string' ? 'HTMLNode' : ''
-  const text = children.reduce((str, next) => typeof next === 'string' ? next + str : str , '')
-  const hexView = new Serialization(type, { tag: element, text, nodes: children, attrs }).getHex()
-
-  return { child: hexView }
-  const id = `El${String(Math.random()).replace('.', '')}`
-  if (typeof tag === 'function')
-    return new tag({ id, children })
-  console.log(tag, attrs, children)
-  if(typeof tag === 'string') {
-    return 
-  }
-  
-}
+export default vreact
 
 
 
