@@ -12,7 +12,7 @@ class App extends Component {
   render() {
     return (
       <div>
-        <h1>Hello!</h1>
+        <h1 fontSize="20px">Hello!</h1>
         <p>Counter: {this.state.counter}</p>
       </div>
     )
