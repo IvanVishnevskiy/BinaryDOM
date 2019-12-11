@@ -1,3 +1,4 @@
+import { types, names } from './schema'
 class Hex {
   static addZeros = (hex = '', length = 2) => {
     hex = String(hex)
@@ -31,7 +32,7 @@ class Hex {
   }
 
   static addLength = (input = '') => {
-    let out = []
+    let out = [ types[Array.isArray(input) ? 'arraylength' : 'stringlength'].id ]
     const length = input.length
     if (length <= 253) 
       out.push(length)
@@ -57,11 +58,13 @@ class Hex {
     return arr
   }
   static getLength = (string = '') => {
-    let length = parseInt(string.slice(0, 2), 16)
-    let start = 2
+    const type = names[string.slice(0, 4)]
+    if(!type) throw new Error('Invalid binary!')
+    let length = parseInt(string.slice(4, 6), 16)
+    let start = 6
     if(length === 254) {
-      length = parseInt(string.slice(0, 8), 16)
-      start = 8
+      length = parseInt(string.slice(4, 12), 16)
+      start = 12
     }
     return { length, start }
   }

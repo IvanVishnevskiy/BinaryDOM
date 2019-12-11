@@ -4,9 +4,9 @@ import Hex from './vdom/hex'
 
 const vreact = (tag, attrs = {}, ...children) => {
   console.log(tag, attrs, children)
+  const id = Hex.random(8)
   if(typeof tag === 'function') {
     const funcStr = tag.toString()
-    const id = Hex.random(8)
     const Component = components.get(funcStr) || new tag({ props: attrs, children, id })
     components.set(tag.toString(), Component)
     components.set(id, Component)
@@ -17,17 +17,9 @@ const vreact = (tag, attrs = {}, ...children) => {
   let element = tags[tag]
   const type = typeof tag === 'string' ? 'HTMLNode' : ''
   const text = children.reduce((str, next) => typeof next === 'string' ? next + str : str , '')
-  const hexView = new Serialization(type, { tag: element, text, nodes: children, attrs }).getHex()
+  const hexView = new Serialization(type, { tag: element, text, nodes: children, attrs, id }).getHex()
 
   return { child: hexView }
-  const id = `El${String(Math.random()).replace('.', '')}`
-  if (typeof tag === 'function')
-    return new tag({ id, children })
-  console.log(tag, attrs, children)
-  if(typeof tag === 'string') {
-    return 
-  }
-  
 }
 
 const tree = ''

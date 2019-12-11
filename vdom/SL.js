@@ -7,6 +7,7 @@ class TypesIn {
     return data
   }
   static string = (str = '') => Hex.fromString(str)
+  static schema = (...[,, name]) => types[name] ? types[name].id : console.error(`No type ${name}`)
   static array = (items = [], { arrayType }) => {
     if(!items || !items.length && !items.__proto__.constructor.assign) return '00000000'
     // TODO: Bad code
@@ -15,8 +16,9 @@ class TypesIn {
     }
     else items = items.map(item => {
       const type = typeof item === 'object' ? 'HTMLNode' : 'TextNode'
+      const id = Hex.random(8)
       if(type === 'HTMLNode') return Hex.addLength(types.htmlnode.id + item.child)
-      else return Hex.addLength(types.textnode.id + new Serialization(type, { text: item }).getHex())
+      else return Hex.addLength(types.textnode.id + new Serialization(type, { id, text: item }).getHex())
     })
     return Array.isArray(items) && items.length ? Hex.addLength(Hex.addLength(items)) : '00000000'
   }
@@ -39,6 +41,7 @@ class TypesOut {
     const res = decoded.join('')
     return { item: res, res: data.slice(offset)}
   }
+  static schema = (data = '') => ({ item: data.slice(0, 4), res: data.slice(4) })
   static array = (data = [], type) => {
     if (!data || data.slice(0, 8) === '00000000') return { item: null, res: data.slice(8) }
     const { str, offset } = Hex.getWithLength(data)
@@ -74,7 +77,7 @@ class Serialization {
     const { params, output = '' } = object
     params.forEach(param => {
       const { name, type } = param
-      const ser = String(TypesIn[type.fieldType](inputParams[name], type))
+      const ser = String(TypesIn[type.fieldType](inputParams[name], type, name))
       this.hex = this.hex + ser || '00000000'
     })
     return output
@@ -98,6 +101,7 @@ class Deserialization {
     data = data.slice(4)
     object.params.forEach(field => {
       const { name, type } = field
+      console.log(name, type, TypesOut[type.fieldType](data || [], type))
       const { res, item } = TypesOut[type.fieldType](data || [], type)
       data = res
       this.fields[name] = item
