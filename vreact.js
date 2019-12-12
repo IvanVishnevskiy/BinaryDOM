@@ -54,7 +54,6 @@ class Component {
 }
 
 const updateTree = component => {
-  console.log(13555555, component, currentBinaryDom)
   const newNode = component.render().child
   const currentPlace = currentBinaryDom.indexOf(component._id)
   const olddata = new Deserialization('component', currentBinaryDom.slice(currentPlace - 4)).fields
@@ -63,10 +62,66 @@ const updateTree = component => {
   console.log(new Deserialization(names[newNode.slice(0, 4)], newNode), new Deserialization(names[oldNode.slice(0, 4)], oldNode))
   console.log('\n\n', newNode, oldNode)
   const differences = []
-  for(let i = 0; i < Math.min(newNode.length, oldNode.length); i++) {
-    const newChar = newNode[i]
-    const oldChar = oldNode[i]
-    if(newChar !== oldChar) differences.push(i)
+  let diffIndex = 0
+  let oldIndex = 0
+  let newIndex = 0
+  let shouldDiff = true
+  let last2OldBytes = 'ffff'
+  let last2NewBytes = 'ffff'
+  while(shouldDiff) {
+    if(diffIndex > 600) {
+      shouldDiff = false
+      continue
+    }
+    const current = {
+
+    }
+    const newByte = newNode[newIndex] + newNode[newIndex + 1]
+    const oldByte = oldNode[oldIndex] + oldNode[oldIndex + 1]
+    let currentId = ''
+    last2NewBytes = last2NewBytes.slice(2) + newByte
+    last2OldBytes = last2OldBytes.slice(2) + oldByte
+    let lastName = names[last2OldBytes]
+    lastName = lastName ? lastName.toLowerCase() : ''
+    let newName = names[last2NewBytes]
+    newName = newName ? newName.toLowerCase() : ''
+    console.log(lastName)
+    if(lastName === 'id') {
+      currentId = oldNode.slice(oldIndex, oldIndex + 8)
+      console.log(currentId)
+    }
+    if(newName === 'htmlnode' || 'attrcode' || 'textNode') {
+      current.type = {
+        name: lastName,
+        position: newByte
+      }
+    }
+    if(newName === 'stringlength') {
+      current.object = {
+        name: 'string',
+        position: newByte
+      }
+    }
+    if(newName === 'arraylength') current.object = {
+      name: 'array',
+      position: newByte
+    }
+    if(lastName.includes('length')) {
+      if(oldByte == 'fe') oldIndex += 8
+      else oldIndex += 2
+      diffIndex += 2
+      continue
+    }
+    if(newName.includes('length')) {
+      if(newByte == 'fe') oldIndex += 8
+      else oldIndex += 2
+      diffIndex += 2
+      continue
+    }
+    console.log(oldByte, newByte)
+    diffIndex += 2
+    oldIndex += 2
+    newIndex += 2
   }
 
   // console.log(differences[differences.length - 1])

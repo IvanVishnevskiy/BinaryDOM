@@ -2,18 +2,18 @@ import vreact, { Component, renderToHTML } from './vreact'
 
 class App extends Component {
   state = {
-    counter: 1
+    color: 'green'
   }
   componentDidMount = () => {
     this.setState({
-      counter: 2
+      color: 'red'
     })
   }
   render() {
     return (
       <div>
-        <h1 fontSize="20px">Hello!</h1>
-        <p>Counter: {this.state.counter}</p>
+        <h1 style={`color: ${this.state.color}`}>Hello!</h1>
+        <p>Hello</p>
       </div>
     )
   }
