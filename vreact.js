@@ -3,8 +3,12 @@ import { Serialization, Deserialization } from './vdom/SL'
 import Hex from './vdom/hex'
 
 const vreact = (tag, attrs = {}, ...children) => {
-  console.log(tag, attrs, children)
   const id = Hex.random(8)
+  let vrid
+  if(attrs) {
+    vrid = attrs.vrid
+    delete attrs.vrid
+  }
   if(typeof tag === 'function') {
     const funcStr = tag.toString()
     const Component = components.get(funcStr) || new tag({ props: attrs, children, id })
@@ -16,8 +20,11 @@ const vreact = (tag, attrs = {}, ...children) => {
   }
   let element = tags[tag]
   const type = typeof tag === 'string' ? 'HTMLNode' : ''
-  const text = children.reduce((str, next) => typeof next === 'string' ? next + str : str , '')
-  const hexView = new Serialization(type, { tag: element, text, nodes: children, attrs, id }).getHex()
+  const text = children.map(c => typeof c === 'string' ? ({
+    text: c.split('~|').slice(1).join(''),
+    vrid: c.split('~|')[0]
+  }) : c)
+  const hexView = new Serialization(type, { tag: element, vrid, text, nodes: text || children, attrs, id }).getHex()
 
   return { child: hexView }
 }
@@ -29,8 +36,8 @@ const allTags = ['div', 'span', 'p', 'h1']
 let currentBinaryDom = ''
 
 const tags = allTags.reduce((all, next, i) => {
-  const hex = (i + 1).toString(16)
-  all[next] = Hex.addZeros(hex, 4)
+  const hex = Hex.random(4)
+  all[next] = hex
   return all
 }, {})
 const binTags = Object.entries(tags).reduce((obj, [key, value]) => ({...obj, [value]: key}), {})
@@ -62,63 +69,95 @@ const updateTree = component => {
   console.log(new Deserialization(names[newNode.slice(0, 4)], newNode), new Deserialization(names[oldNode.slice(0, 4)], oldNode))
   console.log('\n\n', newNode, oldNode)
   const differences = []
+  let currentId
   let diffIndex = 0
   let oldIndex = 0
   let newIndex = 0
   let shouldDiff = true
   let last2OldBytes = 'ffff'
   let last2NewBytes = 'ffff'
+  const current = {
+
+  }
   while(shouldDiff) {
     if(diffIndex > 600) {
       shouldDiff = false
       continue
     }
-    const current = {
-
-    }
+    
     const newByte = newNode[newIndex] + newNode[newIndex + 1]
     const oldByte = oldNode[oldIndex] + oldNode[oldIndex + 1]
-    let currentId = ''
     last2NewBytes = last2NewBytes.slice(2) + newByte
     last2OldBytes = last2OldBytes.slice(2) + oldByte
     let lastName = names[last2OldBytes]
     lastName = lastName ? lastName.toLowerCase() : ''
     let newName = names[last2NewBytes]
     newName = newName ? newName.toLowerCase() : ''
-    console.log(lastName)
     if(lastName === 'id') {
       currentId = oldNode.slice(oldIndex, oldIndex + 8)
-      console.log(currentId)
     }
-    if(newName === 'htmlnode' || 'attrcode' || 'textNode') {
+    console.log(1, newName)
+    if(newName === 'htmlnode' || newName === 'attrcode' || newName === 'textNode' || newName === 'nodescodeFco') {
       current.type = {
         name: lastName,
-        position: newByte
+        position: newIndex
       }
     }
     if(newName === 'stringlength') {
       current.object = {
         name: 'string',
-        position: newByte
+        position: newIndex
       }
     }
     if(newName === 'arraylength') current.object = {
       name: 'array',
-      position: newByte
+      position: newIndex
     }
+    
+    const oldNextByte = oldNode.substr(oldIndex + 2, 2)
+    const newNextByte = newNode.substr(newIndex + 2, 2)
+
+    let shouldContinue = false
     if(lastName.includes('length')) {
-      if(oldByte == 'fe') oldIndex += 8
-      else oldIndex += 2
-      diffIndex += 2
-      continue
+      console.log('old', oldByte, lastName)
+      if(oldNextByte === 'fe') oldIndex += 16
+      else oldIndex += 4
+      diffIndex += 4
+      shouldContinue = true
     }
     if(newName.includes('length')) {
-      if(newByte == 'fe') oldIndex += 8
-      else oldIndex += 2
-      diffIndex += 2
-      continue
+      console.log('new', newByte, newName)
+      if(newNextByte === 'fe') newIndex += 16
+      else newIndex += 4
+      diffIndex += 4
+      shouldContinue = true
     }
-    console.log(oldByte, newByte)
+    if(newName.includes('skipvrid')) {
+      newIndex += 4
+      shouldContinue = true
+    }
+    if(lastName.includes('skipvrid')) {
+      oldIndex += 4
+      shouldContinue = true
+    }
+    if(shouldContinue) continue
+    if(oldByte !== newByte) {
+      const { type = {} } = current
+      const { name, position } = type
+      if(name === 'attrcode') {
+        const newAttrs = newNode.slice(position - 2)
+        const oldAttrs = oldNode.slice(position - 2)
+        const nA2 = newAttrs.slice(4)
+        if(nA2.slice(0, 4) === types.stringlength.id) {
+          console.log(nA2.slice(4))
+          console.log(new Deserialization('string', nA2.slice(0)))
+        }
+        const newAttrsData = new Deserialization('attributes', newAttrs)
+        const oldAttrsData = new Deserialization('attributes', oldAttrs)
+        // console.log(newAttrsData, oldAttrsData)
+      }
+      return console.log(oldByte, newByte, newIndex)
+    }
     diffIndex += 2
     oldIndex += 2
     newIndex += 2
@@ -130,7 +169,7 @@ const updateTree = component => {
 }
 
 const initialTreeRender = tree => {
-  console.log('Binary tree:', tree)
+  // console.log('Binary tree:', tree)
   tree = typeof tree === 'string' ? new Deserialization(names[tree.slice(0, 4)], tree).fields : tree
   const { tag, attrs = [], nodes = [], text, node } = tree
   if(node) {
