@@ -59,12 +59,13 @@ class Hex {
   }
   static getLength = (string = '') => {
     const type = names[string.slice(0, 4)]
-    if(!type) throw new Error('Invalid binary!')
-    let length = parseInt(string.slice(4, 6), 16)
-    let start = 6
+    let offset = 4
+    if(!type) offset = 0
+    let length = parseInt(string.slice(offset, offset + 2), 16)
+    let start = offset + 2
     if(length === 254) {
-      length = parseInt(string.slice(4, 12), 16)
-      start = 12
+      length = parseInt(string.slice(offset, offset + 8), 16)
+      start = offset + 8
     }
     return { length, start }
   }
