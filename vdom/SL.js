@@ -19,7 +19,6 @@ class TypesIn {
     else items = items.map(item => {
       const type = !item.text ? 'HTMLNode' : 'TextNode'
       const id = Hex.random(8)
-      console.log(15321, type, item.text, item.vrid)
       if(type === 'HTMLNode') return Hex.addLength(types.htmlnode.id + item.child)
       else return Hex.addLength(types.textnode.id + new Serialization(type, { id, text: item.text, vrid: item.vrid }).getHex())
     })
