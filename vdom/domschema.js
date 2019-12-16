@@ -2,10 +2,15 @@ export default `
 length#0001
 arrayLength#0002
 attrcode#0007
+nodescode#000e
 stringLength#0008
 id#000b
+skipvrid#000c
 attribute#0003 name:string value:string
-HTMLNode#0004 tag:int16 id:schema id:int64 attrcode:schema attrs:Array<attribute> nodes:Array<HTMLNode|TextNode|Component>
-TextNode#0005 id:schema id:int64 text:string
-Component#0006 id:int64 attrs<attribute> node:string
+HTMLNode#0004 tag:int64 skipvrid:schema vrid:int32 attrcode:schema attrs:Array<attribute> nodescode:schema nodes:Array<HTMLNode|TextNode|Component>
+TextNode#0005 id:schema vrid:int32 text:string
+Component#0006 id:int128 attrs<attribute> node:string
+
+Attributes#9000 attrs:Array<attribute>
+string#9001 value:string
 `
