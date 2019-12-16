@@ -11,9 +11,9 @@ class App extends Component {
   }
   render() {
     return (
-      <div>
-        <h1 style={`color: ${this.state.color}`}>Hello!</h1>
-        <p>Hello</p>
+      <div vrid="1">
+        <h1 vrid="2" style={`color: ${this.state.color}`}>5~|Hello!</h1>
+        <p vrid="3">4~|Hello World!</p>
       </div>
     )
   }
