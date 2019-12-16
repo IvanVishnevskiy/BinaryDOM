@@ -2,32 +2,35 @@ import { types, names } from './schema'
 import Hex from './hex'
 
 class TypesIn {
-  static int = (data = 0, length = 64) => {
+  static int = (data = 0, { length }) => {
     data = typeof data === 'string' ? data : Hex.fromNumber(data, length / 8)
+    while(data.length < parseInt(length) / 8) data = '0' + data
+    
     return data
   }
   static string = (str = '') => Hex.fromString(str)
   static schema = (...[,, name]) => types[name] ? types[name].id : console.error(`No type ${name}`)
   static array = (items = [], { arrayType }) => {
-    if(!items || !items.length && !items.__proto__.constructor.assign) return '00000000'
+    if(!items || !items.length && !items.__proto__.constructor.assign) return '0000'
     // TODO: Bad code
     if(items.__proto__.constructor.assign) {
       items = Object.entries(items).map(([name, value]) => Hex.addLength(String(types[arrayType[0]].id) + new Serialization(arrayType[0], { name, value }).getHex()))
     }
     else items = items.map(item => {
-      const type = typeof item === 'object' ? 'HTMLNode' : 'TextNode'
+      const type = !item.text ? 'HTMLNode' : 'TextNode'
       const id = Hex.random(8)
+      console.log(15321, type, item.text, item.vrid)
       if(type === 'HTMLNode') return Hex.addLength(types.htmlnode.id + item.child)
-      else return Hex.addLength(types.textnode.id + new Serialization(type, { id, text: item }).getHex())
+      else return Hex.addLength(types.textnode.id + new Serialization(type, { id, text: item.text, vrid: item.vrid }).getHex())
     })
-    return Array.isArray(items) && items.length ? Hex.addLength(Hex.addLength(items)) : '00000000'
+    return Array.isArray(items) && items.length ? Hex.addLength(Hex.addLength(items)) : '0000'
   }
 }
 
 class TypesOut {
   static int = (data = '', type) => {
     let { length = 128 } = type
-    length = length / 4
+    length = length / 8
     return { item: data.slice(0, length), res: data.slice(length)}
   }
   static bytes = (data = []) => ({ res: [], item: data })
@@ -43,7 +46,7 @@ class TypesOut {
   }
   static schema = (data = '') => ({ item: data.slice(0, 4), res: data.slice(4) })
   static array = (data = [], type) => {
-    if (!data || data.slice(0, 8) === '00000000') return { item: null, res: data.slice(8) }
+    if (!data || data.slice(0, 4) === '0000') return { item: null, res: data.slice(4) }
     const { str, offset } = Hex.getWithLength(data)
     const { arrayType } = type
     const arrayTypes = arrayType.reduce((t, n) => {
@@ -78,7 +81,7 @@ class Serialization {
     params.forEach(param => {
       const { name, type } = param
       const ser = String(TypesIn[type.fieldType](inputParams[name], type, name))
-      this.hex = this.hex + ser || '00000000'
+      this.hex = this.hex + ser || '0000'
     })
     return output
   }
@@ -101,7 +104,6 @@ class Deserialization {
     data = data.slice(4)
     object.params.forEach(field => {
       const { name, type } = field
-      console.log(name, type, TypesOut[type.fieldType](data || [], type))
       const { res, item } = TypesOut[type.fieldType](data || [], type)
       data = res
       this.fields[name] = item
