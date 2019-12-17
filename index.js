@@ -5,15 +5,17 @@ class App extends Component {
     color: 'green'
   }
   componentDidMount = () => {
-    this.setState({
-      color: 'red'
-    })
+    setTimeout(() => {
+      this.setState({
+        color: 'red'
+      })
+    }, 10)
   }
   render() {
     return (
       <div vrid="1">
-        <h1 vrid="2" style={`color: ${this.state.color}`}>5~|Hello!</h1>
-        <p vrid="3">4~|Hello World!</p>
+        <h1 vrid="2" style={`transition: 2s ease; color: ${this.state.color}`}>5~|Hello!</h1>
+        <p vrid="3" >4~|Hello World!</p>
       </div>
     )
   }

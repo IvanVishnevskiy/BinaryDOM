@@ -2,6 +2,8 @@ import { names, types } from './vdom/schema'
 import { Serialization, Deserialization } from './vdom/SL'
 import Hex from './vdom/hex'
 
+const TREENODES = {}
+
 const vreact = (tag, attrs = {}, ...children) => {
   const id = Hex.random(8)
   let vrid
@@ -61,30 +63,28 @@ class Component {
 }
 
 const updateTree = component => {
+  console.log('start', performance.now())
   const newNode = component.render().child
   const currentPlace = currentBinaryDom.indexOf(component._id)
   const olddata = new Deserialization('component', currentBinaryDom.slice(currentPlace - 4)).fields
   const oldNode = olddata.node
 
-  console.log(new Deserialization(names[newNode.slice(0, 4)], newNode), new Deserialization(names[oldNode.slice(0, 4)], oldNode))
-  console.log('\n\n', newNode, oldNode)
-  const differences = []
-  let currentId
   let diffIndex = 0
   let oldIndex = 0
   let newIndex = 0
   let shouldDiff = true
   let last2OldBytes = 'ffff'
+  let currentId
   let last2NewBytes = 'ffff'
   const current = {
 
   }
   while(shouldDiff) {
-    if(diffIndex > 600) {
+    if(diffIndex > 500) {
       shouldDiff = false
       continue
     }
-    
+    console.log('newBytes', newNode.slice(newIndex))
     const newByte = newNode[newIndex] + newNode[newIndex + 1]
     const oldByte = oldNode[oldIndex] + oldNode[oldIndex + 1]
     last2NewBytes = last2NewBytes.slice(2) + newByte
@@ -96,7 +96,6 @@ const updateTree = component => {
     if(lastName === 'id') {
       currentId = oldNode.slice(oldIndex, oldIndex + 8)
     }
-    console.log(1, newName)
     if(newName === 'htmlnode' || newName === 'attrcode' || newName === 'textNode' || newName === 'nodescodeFco') {
       current.type = {
         name: lastName,
@@ -119,44 +118,77 @@ const updateTree = component => {
 
     let shouldContinue = false
     if(lastName.includes('length')) {
-      console.log('old', oldByte, lastName)
       if(oldNextByte === 'fe') oldIndex += 16
       else oldIndex += 4
       diffIndex += 4
       shouldContinue = true
     }
     if(newName.includes('length')) {
-      console.log('new', newByte, newName)
       if(newNextByte === 'fe') newIndex += 16
       else newIndex += 4
       diffIndex += 4
       shouldContinue = true
     }
     if(newName.includes('skipvrid')) {
+      current.vrid = newNode.substr(newIndex + 2, 4)
       newIndex += 4
       shouldContinue = true
     }
     if(lastName.includes('skipvrid')) {
+      current.vrid = oldNode.substr(oldIndex + 2, 4)
       oldIndex += 4
       shouldContinue = true
     }
     if(shouldContinue) continue
     if(oldByte !== newByte) {
+      console.log(current, oldByte, newByte, newIndex, newNode.slice(newIndex))
       const { type = {} } = current
       const { name, position } = type
       if(name === 'attrcode') {
         const newAttrs = newNode.slice(position - 2)
         const oldAttrs = oldNode.slice(position - 2)
-        const nA2 = newAttrs.slice(4)
-        if(nA2.slice(0, 4) === types.stringlength.id) {
-          console.log(nA2.slice(4))
-          console.log(new Deserialization('string', nA2.slice(0)))
+        const oldNodeAttrsFirstLengthByte = oldNode.substr(position - 12, 2)
+        const newNodeAttrsFirstLengthByte = newNode.substr(position - 12, 2)
+        if(oldNodeAttrsFirstLengthByte === 'fe') {
+
         }
-        const newAttrsData = new Deserialization('attributes', newAttrs)
-        const oldAttrsData = new Deserialization('attributes', oldAttrs)
+        if(newNodeAttrsFirstLengthByte === 'fe') {
+
+        }
+        const newAttrsData = new Deserialization('attributes', newAttrs).fields.attrs
+        const oldAttrsData = new Deserialization('attributes', oldAttrs).fields.attrs
+        let updateAttrs = []
+        let deleteAttrs = []
+        if(newAttrsData.length === 0) deleteAttrs = oldAttrsData
+        else {
+          newAttrsData.forEach(attr => {
+            const { name, value } = attr
+            const oldAttrsIndex = oldAttrsData.findIndex((attr) => attr.name === name)
+            if(oldAttrsIndex !== -1) {
+              const { value: oldValue } = oldAttrsData[oldAttrsIndex]
+              if(value !== oldValue) updateAttrs.push(attr)
+              delete oldAttrsData[oldAttrsIndex]
+            }
+            oldAttrsData.forEach(attr => deleteAttrs.push(attr))
+          })
+        }
+        const node = TREENODES[current.vrid]
+        if(updateAttrs.length) updateAttrs.forEach(attr => {
+          if(!node) throw new Error('vreact error: no node to change')
+          node.setAttribute(attr.name, attr.value)
+        })
+        if(deleteAttrs.length) deleteAttrs.forEach(attr => {
+          if(!node) throw new Error('vreact error: no node to change')
+          node.removeAttribute(attr.name)
+        })
+        console.log('end', performance.now())
+        diffIndex += parseInt(newNodeAttrsFirstLengthByte, 16)
+        newIndex += parseInt(newNodeAttrsFirstLengthByte, 16)
+        oldIndex += parseInt(oldNodeAttrsFirstLengthByte, 16)
+        continue        
         // console.log(newAttrsData, oldAttrsData)
       }
-      return console.log(oldByte, newByte, newIndex)
+      
     }
     diffIndex += 2
     oldIndex += 2
@@ -171,23 +203,27 @@ const updateTree = component => {
 const initialTreeRender = tree => {
   // console.log('Binary tree:', tree)
   tree = typeof tree === 'string' ? new Deserialization(names[tree.slice(0, 4)], tree).fields : tree
-  const { tag, attrs = [], nodes = [], text, node } = tree
+  const { tag, attrs = [], nodes = [], text, node, vrid } = tree
   if(node) {
     const nodeType = node.slice(0, 4)
-    console.log(names[nodeType], 'component')
     const parsedNode = new Deserialization(names[nodeType], node)
     const nodeTree = initialTreeRender(parsedNode.fields)
     const Component = components.get(tree.id)
     if (Component && Component.componentDidMount) Component.componentDidMount()
     return nodeTree
   }
-  if(text) return document.createTextNode(text)
-  const elem = document.createElement(binTags[tag])
-  if(attrs && attrs.length) attrs.forEach(({ name, value }) => elem.setAttribute(name, value))
-  if(nodes && nodes.length) nodes.forEach(node => {
-    const elemNode = initialTreeRender(node)
-    elem.appendChild(elemNode)
-  })
+  let elem
+  if(text) elem = document.createTextNode(text)
+  else {
+    elem = document.createElement(binTags[tag])
+    if(attrs && attrs.length) attrs.forEach(({ name, value }) => elem.setAttribute(name, value))
+    if(nodes && nodes.length) nodes.forEach(node => {
+      const elemNode = initialTreeRender(node)
+      elem.appendChild(elemNode)
+    })
+  }
+  TREENODES[vrid] = elem
+  console.log(elem)
   return elem
 }
 
