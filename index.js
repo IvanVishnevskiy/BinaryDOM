@@ -1,3 +1,4 @@
+/* eslint-disable react/react-in-jsx-scope */
 import vreact, { Component, renderToHTML } from './vreact'
 
 class App extends Component {
@@ -9,13 +10,13 @@ class App extends Component {
       this.setState({
         color: 'red'
       })
-    }, 10)
+    }, 3000)
   }
   render() {
     return (
       <div vrid="1">
         <h1 vrid="2" style={`transition: 2s ease; color: ${this.state.color}`}>5~|Hello!</h1>
-        <p vrid="3" >4~|Hello World!</p>
+        <p vrid="3" style={`color: ${this.state.color}`} >4~|Hello World!</p>
       </div>
     )
   }

@@ -14,7 +14,7 @@ class TypesIn {
     if(!items || !items.length && !items.__proto__.constructor.assign) return '0000'
     // TODO: Bad code
     if(items.__proto__.constructor.assign) {
-      items = Object.entries(items).map(([name, value]) => Hex.addLength(String(types[arrayType[0]].id) + new Serialization(arrayType[0], { name, value }).getHex()))
+      items = Object.entries(items).map(([name, value]) => Hex.addLength(new Serialization(arrayType[0], { name, value }).getHex()))
     }
     else items = items.map(item => {
       const type = !item.text ? 'HTMLNode' : 'TextNode'
@@ -22,6 +22,7 @@ class TypesIn {
       if(type === 'HTMLNode') return Hex.addLength(types.htmlnode.id + item.child)
       else return Hex.addLength(types.textnode.id + new Serialization(type, { id, text: item.text, vrid: item.vrid }).getHex())
     })
+    if (items.length === 2) console.log(142, Hex.addLength(Hex.addLength(items)))
     return Array.isArray(items) && items.length ? Hex.addLength(Hex.addLength(items)) : '0000'
   }
 }
@@ -47,16 +48,19 @@ class TypesOut {
   static array = (data = [], type) => {
     if (!data || data.slice(0, 4) === '0000') return { item: null, res: data.slice(4) }
     const { str, offset } = Hex.getWithLength(data)
+    
     const { arrayType } = type
     const arrayTypes = arrayType.reduce((t, n) => {
       const id = types[n.toLowerCase()].id
       t[id] = names[id]
       return t
     }, {})
+    console.log(str, data, type, Hex.getArrayWithLength(str))
     const items = Hex.getArrayWithLength(str).filter(item => item).map(item => {
       const type = item.slice(0, 4)
       const actualType = arrayTypes[type]
       if (!actualType) throw new Error('Unknown array type!')
+      console.log(actualType, item)
       const data = new Deserialization(actualType, item.slice(4)).fields
       return data  
     })

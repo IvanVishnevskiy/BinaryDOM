@@ -207,6 +207,7 @@ const initialTreeRender = tree => {
   if(node) {
     const nodeType = node.slice(0, 4)
     const parsedNode = new Deserialization(names[nodeType], node)
+    console.log('init', parsedNode.fields)
     const nodeTree = initialTreeRender(parsedNode.fields)
     const Component = components.get(tree.id)
     if (Component && Component.componentDidMount) Component.componentDidMount()

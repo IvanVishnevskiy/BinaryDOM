@@ -36,7 +36,7 @@ class Hex {
     const length = input.length
     if (length <= 253) 
       out.push(length)
-    else out = out.concat([254, length & 0xFF, (length & 0xFF00) >> 8, (length & 0xFF0000) >> 16])
+    else out = out.concat([254, (length & 0xFF0000) >> 16, (length & 0xFF00) >> 8, length & 0xFF ])
     const mappedOut = out.map(item => this.addZeros(item.toString(16)))
     return Array.isArray(input) ? [...mappedOut, ...input].join('') : mappedOut.join('') + input
   }
@@ -61,10 +61,10 @@ class Hex {
     const type = names[string.slice(0, 4)]
     let offset = 4
     if(!type) offset = 0
-    let length = parseInt(string.slice(offset, offset + 2), 16)
+    let length = parseInt(string.substr(offset, 2), 16)
     let start = offset + 2
     if(length === 254) {
-      length = parseInt(string.slice(offset, offset + 8), 16)
+      length = parseInt(string.slice(offset + 2, offset + 8), 16)
       start = offset + 8
     }
     return { length, start }
