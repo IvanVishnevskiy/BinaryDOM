@@ -79,14 +79,19 @@ const updateTree = component => {
   const current = {
 
   }
+  let changedAttr = false
   while(shouldDiff) {
-    if(diffIndex > 500) {
+    if(diffIndex > 10000) {
       shouldDiff = false
       continue
     }
-    console.log('newBytes', newNode.slice(newIndex))
+    // console.log('newBytes', newNode.slice(newIndex))
     const newByte = newNode[newIndex] + newNode[newIndex + 1]
     const oldByte = oldNode[oldIndex] + oldNode[oldIndex + 1]
+    if(!oldByte || !newByte) {
+      shouldDiff = false
+      continue
+    }
     last2NewBytes = last2NewBytes.slice(2) + newByte
     last2OldBytes = last2OldBytes.slice(2) + oldByte
     let lastName = names[last2OldBytes]
@@ -115,7 +120,7 @@ const updateTree = component => {
     
     const oldNextByte = oldNode.substr(oldIndex + 2, 2)
     const newNextByte = newNode.substr(newIndex + 2, 2)
-
+    console.log(newName)
     let shouldContinue = false
     if(lastName.includes('length')) {
       if(oldNextByte === 'fe') oldIndex += 16
@@ -141,20 +146,19 @@ const updateTree = component => {
     }
     if(shouldContinue) continue
     if(oldByte !== newByte) {
-      console.log(current, oldByte, newByte, newIndex, newNode.slice(newIndex))
+      console.log(123, current, oldByte, newByte, newIndex, newNode.slice(newIndex))
       const { type = {} } = current
       const { name, position } = type
       if(name === 'attrcode') {
         const newAttrs = newNode.slice(position - 2)
         const oldAttrs = oldNode.slice(position - 2)
-        const oldNodeAttrsFirstLengthByte = oldNode.substr(position - 12, 2)
-        const newNodeAttrsFirstLengthByte = newNode.substr(position - 12, 2)
-        if(oldNodeAttrsFirstLengthByte === 'fe') {
+        const oldNodeAttrsFirstLengthByte = oldNode.substr(position + 6, 2)
+        const newNodeAttrsFirstLengthByte = newNode.substr(position + 6, 2)
+        let oldNodeAttrsLength = oldNodeAttrsFirstLengthByte === 'fe' ? parseInt(oldNode.substr(position - 10, 6), 16) : parseInt(oldNodeAttrsFirstLengthByte, 16)
+        let newNodeAttrsLength = newNodeAttrsFirstLengthByte === 'fe' ? parseInt(newNode.substr(position - 10, 6), 16) : parseInt(newNodeAttrsFirstLengthByte, 16)
+        console.log(newNode.slice(position))
+        console.log(oldNodeAttrsLength, newNodeAttrsLength)
 
-        }
-        if(newNodeAttrsFirstLengthByte === 'fe') {
-
-        }
         const newAttrsData = new Deserialization('attributes', newAttrs).fields.attrs
         const oldAttrsData = new Deserialization('attributes', oldAttrs).fields.attrs
         let updateAttrs = []
@@ -181,10 +185,13 @@ const updateTree = component => {
           if(!node) throw new Error('vreact error: no node to change')
           node.removeAttribute(attr.name)
         })
-        console.log('end', performance.now())
-        diffIndex += parseInt(newNodeAttrsFirstLengthByte, 16)
-        newIndex += parseInt(newNodeAttrsFirstLengthByte, 16)
-        oldIndex += parseInt(oldNodeAttrsFirstLengthByte, 16)
+        console.log('end', performance.now(), newIndex)
+        diffIndex += newNodeAttrsLength || 500
+        newIndex = position + newNodeAttrsLength + 6
+        oldIndex += position + oldNodeAttrsLength + 6
+        current.type = {}
+        changedAttr = true
+        console.log('changedAttr', changedAttr)
         continue        
         // console.log(newAttrsData, oldAttrsData)
       }

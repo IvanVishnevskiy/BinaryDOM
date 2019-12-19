@@ -15,9 +15,13 @@ class App extends Component {
   render() {
     return (
       <div vrid="1">
-        <h1 vrid="2" style={`transition: 2s ease; color: ${this.state.color}`}>5~|Hello!</h1>
+        <p vrid="2" style={`transition: 2s ease; color: ${this.state.color}`}>5~|Hello!</p>
         <p vrid="3" style={`color: ${this.state.color}`} >4~|Hello World!</p>
       </div>
+      // <div vrid="1" style={`transition: 2s ease; color: ${this.state.color}`}>
+      //   5~|Hello!
+        
+      // </div>
     )
   }
 }

@@ -55,12 +55,10 @@ class TypesOut {
       t[id] = names[id]
       return t
     }, {})
-    console.log(str, data, type, Hex.getArrayWithLength(str))
     const items = Hex.getArrayWithLength(str).filter(item => item).map(item => {
       const type = item.slice(0, 4)
       const actualType = arrayTypes[type]
       if (!actualType) throw new Error('Unknown array type!')
-      console.log(actualType, item)
       const data = new Deserialization(actualType, item.slice(4)).fields
       return data  
     })
