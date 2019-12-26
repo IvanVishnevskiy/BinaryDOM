@@ -69,6 +69,13 @@ class Hex {
     }
     return { length, start }
   }
+  static reverse = hex => {
+    let newHex = ''
+    for(let i = hex.length; i > 0; i -= 2) {
+      newHex = newHex + hex.substr(i - 2, 2)
+    }
+    return newHex
+  }
 }
-
+window.Hex = Hex
 export default Hex

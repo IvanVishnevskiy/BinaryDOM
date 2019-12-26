@@ -183,8 +183,8 @@ const updateTree = component => {
         
         const oldNodeAttrsFirstLengthByte = oldNode.substr(position + offset + 6, 2)
         const newNodeAttrsFirstLengthByte = newNode.substr(position + 6, 2)
-        let oldNodeAttrsLength = oldNodeAttrsFirstLengthByte === 'fe' ? parseInt(oldNode.substr(position + offset - 10, 6), 16) : parseInt(oldNodeAttrsFirstLengthByte, 16)
-        let newNodeAttrsLength = newNodeAttrsFirstLengthByte === 'fe' ? parseInt(newNode.substr(position - 10, 6), 16) : parseInt(newNodeAttrsFirstLengthByte, 16)
+        let oldNodeAttrsLength = oldNodeAttrsFirstLengthByte === 'fe' ? parseInt(oldNode.substr(position + offset + 8, 6), 16) : parseInt(oldNodeAttrsFirstLengthByte, 16)
+        let newNodeAttrsLength = newNodeAttrsFirstLengthByte === 'fe' ? parseInt(newNode.substr(position + 8, 6), 16) : parseInt(newNodeAttrsFirstLengthByte, 16)
         const newAttrsData = new Deserialization('attributes', newAttrs).fields.attrs
         const oldAttrsData = new Deserialization('attributes', oldAttrs).fields.attrs
         let updateAttrs = []
@@ -193,6 +193,7 @@ const updateTree = component => {
         else {
           newAttrsData.forEach(attr => {
             const { name, value } = attr
+            console.log(newAttrsData, oldAttrsData, oldNodeAttrsLength, oldNodeAttrsFirstLengthByte, newNodeAttrsLength)
             const oldAttrsIndex = oldAttrsData.findIndex((attr) => attr.name === name)
             if(oldAttrsIndex !== -1) {
               const { value: oldValue } = oldAttrsData[oldAttrsIndex]
