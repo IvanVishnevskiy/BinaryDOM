@@ -2,7 +2,7 @@ export default `
 length#0001
 arrayLength#0002
 attrcode#0007
-nodescode#000e
+nodescode#000f
 stringLength#0008
 id#000b
 skipvrid#000c

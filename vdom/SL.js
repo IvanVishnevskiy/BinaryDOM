@@ -20,9 +20,8 @@ class TypesIn {
       const type = !item.text ? 'HTMLNode' : 'TextNode'
       const id = Hex.random(8)
       if(type === 'HTMLNode') return Hex.addLength(types.htmlnode.id + item.child)
-      else return Hex.addLength(types.textnode.id + new Serialization(type, { id, text: item.text, vrid: item.vrid }).getHex())
+      else return Hex.addLength(new Serialization(type, { id, text: item.text, vrid: item.vrid }).getHex())
     })
-    if (items.length === 2) console.log(142, Hex.addLength(Hex.addLength(items)))
     return Array.isArray(items) && items.length ? Hex.addLength(Hex.addLength(items)) : '0000'
   }
 }
@@ -58,7 +57,7 @@ class TypesOut {
     const items = Hex.getArrayWithLength(str).filter(item => item).map(item => {
       const type = item.slice(0, 4)
       const actualType = arrayTypes[type]
-      if (!actualType) throw new Error('Unknown array type!')
+      if (!actualType) throw new Error('Unknown array type: ' + type)
       const data = new Deserialization(actualType, item.slice(4)).fields
       return data  
     })
