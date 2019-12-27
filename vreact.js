@@ -193,8 +193,8 @@ const updateTree = component => {
         else {
           newAttrsData.forEach(attr => {
             const { name, value } = attr
-            console.log(newAttrsData, oldAttrsData, oldNodeAttrsLength, oldNodeAttrsFirstLengthByte, newNodeAttrsLength)
-            const oldAttrsIndex = oldAttrsData.findIndex((attr) => attr.name === name)
+            const oldAttrsIndex = oldAttrsData.findIndex((attr) => attr && attr.name === name)
+            
             if(oldAttrsIndex !== -1) {
               const { value: oldValue } = oldAttrsData[oldAttrsIndex]
               if(value !== oldValue) updateAttrs.push(attr)
